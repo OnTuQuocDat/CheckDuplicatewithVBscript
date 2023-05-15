@@ -9,7 +9,7 @@ def copy_txt_file():
         shutil.copyfile(startfile,endfile)
 
 def convert_csv():
-    read_file = pd.read_csv(r'C:\Sonion\debug_copy.txt',sep='\s+',header=None)
+    read_file = pd.read_csv(r'C:\Sonion\debug.txt',sep='\s+',header=None)
     read_file.to_csv(r'C:\Sonion\debug.csv',index=None)
 
 def convert_txt():

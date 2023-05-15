@@ -56,13 +56,13 @@ class Page1(QMainWindow):
     @pyqtSlot()
     def close_program(self):
         self.win1.close()
-        exit()
+        #exit()
 
     @pyqtSlot()
     def close_page1(self):
         pop_up_OK()
         self.win1.close()
-        exit()
+        #exit()
 
     def delete_duplicate(self):
         ignore_complete()
@@ -100,7 +100,7 @@ class BackEnd(QMainWindow):
 
 
     def relation_csv_to_list(self):
-        copy_txt_file()
+        #copy_txt_file() #DAQ edit 12/5/2023
         convert_csv()
         #Get cot thu 8 in to list python
         ##Dat ten cho column
