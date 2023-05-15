@@ -13,7 +13,7 @@ base = None
 
 setup(
     name="GammaSU",
-    version="1.3.1",
+    version="1.3.2",
     description="GammaSU application!",
     options={"build_exe": build_exe_options},
     executables=[Executable("new_main.py", base=base)]

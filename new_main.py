@@ -23,6 +23,9 @@ import shutil
 import time
 #global trigger_auto
 
+global csv_direct
+csv_direct = "debug.csv"
+txt_direct = "debug.txt"
 class Page1(QMainWindow):
     setText_example = pyqtSignal()
     close_window = pyqtSignal()
@@ -107,7 +110,7 @@ class BackEnd(QMainWindow):
         # column_names = ["Date","Time","AMPM","ROWS","numROW","COLUMN","numColumn","Serial"]
         # df = pd.read_csv("debug.csv",names=column_names)
         # test = df.coul
-        data = pd.read_csv("C:\Sonion\debug.csv")
+        data = pd.read_csv(csv_direct)
         # self.copy_data = data.copy()
         # self.copy_data.to_csv("debug_copy.csv",index=False)
         serial = data['7'].to_list()
@@ -158,7 +161,7 @@ class BackEnd(QMainWindow):
 
 
     def display_ui(self,position_duplicate):
-        self.data = pd.read_csv("C:\Sonion\debug.csv")
+        self.data = pd.read_csv(csv_direct)
 
         display_ui_date = self.data.iat[position_duplicate,0] #Hàng 5 cột 0
         display_ui_time = self.data.iat[position_duplicate,1]
@@ -184,7 +187,7 @@ class Worker1(QObject):
         print("Process 1 lan") 
         serial_number = run_algorithm.relation_csv_to_list()
         index_duplicate,w.len_duplicate = run_algorithm.find_duplicates(serial_number)
-        data = pd.read_csv("C:\Sonion\debug.csv")
+        data = pd.read_csv(csv_direct)
         print("Len duplicate: ",w.len_duplicate)
 
         if w.len_duplicate == 0:
@@ -202,25 +205,37 @@ class Worker1(QObject):
                     pass
 
             #Đợi xác nhận hết rồi Xoa du lieu luôn 1 lần
-            for delete_index in index_duplicate:
-                data = data.drop(labels=[delete_index],axis=0)
-            data.to_csv("C:\Sonion\debug.csv",index=False)
+            # for delete_index in index_duplicate:
+            #     data = data.drop(labels=[delete_index],axis=0)
+            # data.to_csv(csv_direct,index=False)
 
-            #Xóa trên txt, hoàn tất process
-            print("INDEX DUPLICATE: ",index_duplicate)
+            # #Xóa trên txt, hoàn tất process
+            # print("INDEX DUPLICATE: ",index_duplicate)
 
-            a_file = open("C:\Sonion\debug.txt","r")
-            lines = a_file.readlines()
-            a_file.close()
-            #delete rows
-            for i in range(0,len(index_duplicate)):
-                del lines[index_duplicate[i]]
-            #write to new file
-            new_file = open("C:\Sonion\debug.txt","w+")
-            for line in lines:
-                new_file.write(line)
-            new_file.close()
 
+            # a_file = open(txt_direct,"r")
+            # lines = a_file.readlines()
+            # a_file.close()
+            # #delete rows
+            # for i in range(0,len(index_duplicate)):
+            #     del lines[index_duplicate[i]]
+            #     # print("Line thu: ", i)
+            #     # print(lines[index_duplicate[i]])
+            # #write to new file
+            # new_file = open(txt_direct,"w+")
+            # for line in lines:
+            #     new_file.write(line)
+            # new_file.close()
+
+            #Open the file in read mode and read all the lines into a list
+            with open(txt_direct,'r') as file:
+                lines = file.readlines()
+            #Use a loop to remove the rows from the list
+            for index in sorted(index_duplicate, reverse=True):
+                del lines[index]
+            #Open the same file in write mode and write the updated list to the file
+            with open(txt_direct,'w') as file:
+                file.writelines(lines)
             w.close_all.emit()
             
     
