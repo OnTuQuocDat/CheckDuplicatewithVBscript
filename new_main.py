@@ -4,7 +4,7 @@
 # Update: 27/04/2023
 # Built = Python 3.10.7 
 
-#Special command python -m PyQt5.uic.pyuic -x inteface.ui -o interface.py
+#Special command python -m PyQt5.uic.pyuic -x Interface.ui -o Interface.py
 
 
 
@@ -16,6 +16,7 @@ import datetime
 from time import strftime,localtime
 import pandas as pd
 from Interface import Ui_MainWindow
+from Password import Ui_PasswordWindow
 from convert_txt_to_csv import *
 from time import sleep
 from warning import *
@@ -24,8 +25,37 @@ import time
 #global trigger_auto
 
 global csv_direct
+global_password = "IDEE"
 csv_direct = "debug.csv"
 txt_direct = "debug.txt"
+
+class Password_page(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.winpass = QMainWindow()
+        self.page2 = Ui_PasswordWindow()
+        self.page2.setupUi(self.winpass)
+        self.winpass.setFixedHeight(166)
+        self.winpass.setFixedWidth(513)
+        self.winpass.show()
+
+        self.page2.Enter_password.clicked.connect(self.check_password)
+
+    def check_password(self):
+        if self.page2.password_blank.text() == "admin":
+            print("pass")
+            #Enable button set dung lượng file
+            w.page1.spinBox.setEnabled(True)
+            w.page1.Confirm_button.setEnabled(True)
+            self.winpass.close()
+
+            
+            
+        else:
+            wrong_password()
+            self.winpass.close()
+
+
 class Page1(QMainWindow):
     setText_example = pyqtSignal()
     close_window = pyqtSignal()
@@ -51,7 +81,11 @@ class Page1(QMainWindow):
         self.len_duplicate = 0 
 
         self.page1.Confirm_ignore.clicked.connect(self.delete_duplicate)
-    
+
+        self.page1.Change_button.clicked.connect(self.change_datafile)
+        
+        self.page1.Confirm_button.clicked.connect(self.action_confirmbutton)
+
     @pyqtSlot()
     def display_for_OP(self):
         pop_up_warning()
@@ -67,6 +101,15 @@ class Page1(QMainWindow):
         self.win1.close()
         #exit()
 
+    def action_confirmbutton(self):
+        change_number_complete()
+        self.page1.spinBox.setEnabled(False)
+        self.page1.Confirm_button.setEnabled(False)
+
+
+    def change_datafile(self):
+        self.winpass = Password_page()
+    
     def delete_duplicate(self):
         ignore_complete()
         self.setText_example.emit()
@@ -117,6 +160,13 @@ class BackEnd(QMainWindow):
         # print(serial)
         return serial#,self.copy_data
     
+    def seperate_file(self):
+        #Cut 25k line đầu to backup file theo giờ
+        pass
+    
+
+    def delete_seperate_file(self):
+        pass
 
 
     def find_duplicates(self,list_serial):
@@ -185,7 +235,9 @@ class Worker1(QObject):
         super().__init__()
     def main_thread(self):
         print("Process 1 lan") 
+        #Full data in debug txt file
         serial_number = run_algorithm.relation_csv_to_list()
+        
         index_duplicate,w.len_duplicate = run_algorithm.find_duplicates(serial_number)
         data = pd.read_csv(csv_direct)
         print("Len duplicate: ",w.len_duplicate)
@@ -238,8 +290,19 @@ class Worker1(QObject):
                 file.writelines(lines)
             w.close_all.emit()
             
-    
+def change_number_complete():
+    msg = QtWidgets.QMessageBox()
+    #icon Critical,Warning,Information,Question
+    msg.setIcon(QtWidgets.QMessageBox.Information)
+    msg.setText("Complete change")
+    msg.exec_()          
 
+def wrong_password():
+    msg = QtWidgets.QMessageBox()
+    #icon Critical,Warning,Information,Question
+    msg.setIcon(QtWidgets.QMessageBox.Warning)
+    msg.setText("Wrong Password")
+    msg.exec_()   
 
 if __name__ == '__main__':
     try:     
