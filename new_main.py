@@ -8,7 +8,7 @@
 
 
 
-from PyQt5.QtWidgets import QApplication,QMainWindow
+from PyQt5.QtWidgets import QApplication,QMainWindow,QLineEdit
 from PyQt5.QtCore import QThread,QObject,pyqtSignal,QRunnable,pyqtSlot
 from PyQt5 import QtWidgets,QtCore
 import sys
@@ -23,12 +23,14 @@ from warning import *
 import shutil
 import time
 #global trigger_auto
+import csv
+import os
 
 global csv_direct
-global_password = "IDEE"
+
 csv_direct = "debug.csv"
 txt_direct = "debug.txt"
-
+file_txt_name = "output.txt"
 class Password_page(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -79,7 +81,10 @@ class Page1(QMainWindow):
         self.display_column = None
         self.display_serial = None
         self.len_duplicate = 0 
-
+        read_file = open("number_file.txt","r")
+        self.memorydata = int(read_file.read())
+        self.page1.spinBox.setValue(self.memorydata)
+        
         self.page1.Confirm_ignore.clicked.connect(self.delete_duplicate)
 
         self.page1.Change_button.clicked.connect(self.change_datafile)
@@ -98,11 +103,17 @@ class Page1(QMainWindow):
     @pyqtSlot()
     def close_page1(self):
         pop_up_OK()
-        self.win1.close()
+
+        #self.win1.close()
         #exit()
 
     def action_confirmbutton(self):
         change_number_complete()
+        #Save data to number_file.txt
+        with open("number_file.txt", "w") as file:
+            file.write(self.page1.spinBox.text())
+
+        self.page1.spinBox.text()
         self.page1.spinBox.setEnabled(False)
         self.page1.Confirm_button.setEnabled(False)
 
@@ -157,8 +168,13 @@ class BackEnd(QMainWindow):
         # self.copy_data = data.copy()
         # self.copy_data.to_csv("debug_copy.csv",index=False)
         serial = data['7'].to_list()
+        serial0 = data['0'].to_list()
+        serial1 = data['1'].to_list()
+        serial2 = data['2'].to_list()
+        serial4 = data['4'].to_list()
+        serial6 = data['6'].to_list()
         # print(serial)
-        return serial#,self.copy_data
+        return serial,serial0,serial1,serial2,serial4,serial6
     
     def seperate_file(self):
         #Cut 25k line đầu to backup file theo giờ
@@ -178,7 +194,8 @@ class BackEnd(QMainWindow):
         unique_duplicates = list(set(duplicates))
         # if len(unique_duplicates) > 0:
         #     pop_up_warning()
-        
+        #print("Unique: ",unique_duplicates)
+        #print("Length List check: ",len(list_serial))
 
         #
         indices = []
@@ -186,6 +203,7 @@ class BackEnd(QMainWindow):
             for test in unique_duplicates:
                 if item == test:
                     indices.append(index)
+        
         #
 
         save_dup = {}
@@ -200,6 +218,7 @@ class BackEnd(QMainWindow):
                     # print("List unique duplicate: ",[i])
                     save_dup['Dup'+str(i)].append(j)
             max_value.append(max(save_dup['Dup' +str(i)]))
+
         print("MAX VALUE: ",max_value)
 
         # print("Dup1: ",max(save_dup['Dup'+str(0)]))
@@ -210,15 +229,20 @@ class BackEnd(QMainWindow):
 
 
 
-    def display_ui(self,position_duplicate):
-        self.data = pd.read_csv(csv_direct)
-
-        display_ui_date = self.data.iat[position_duplicate,0] #Hàng 5 cột 0
-        display_ui_time = self.data.iat[position_duplicate,1]
-        display_ui_AMPM = self.data.iat[position_duplicate,2]
-        display_ui_row = self.data.iat[position_duplicate,4]
-        display_ui_column = self.data.iat[position_duplicate,6]
-        display_ui_serial = self.data.iat[position_duplicate,7]
+    def display_ui(self,position_duplicate,colum0,colum1,colum2,colum4,colum6,list_check):
+        # self.data = pd.read_csv(csv_direct)
+        display_ui_date = colum0[position_duplicate]
+        display_ui_time = colum1[position_duplicate]
+        display_ui_AMPM = colum2[position_duplicate]
+        display_ui_row = colum4[position_duplicate]
+        display_ui_column = colum6[position_duplicate]
+        display_ui_serial = list_check[position_duplicate]
+        # display_ui_date = self.data.iat[position_duplicate,0] #Hàng 5 cột 0
+        # display_ui_time = self.data.iat[position_duplicate,1]
+        # display_ui_AMPM = self.data.iat[position_duplicate,2]
+        # display_ui_row = self.data.iat[position_duplicate,4]
+        # display_ui_column = self.data.iat[position_duplicate,6]
+        # display_ui_serial = self.data.iat[position_duplicate,7]
         
         w.display_datetime = str(display_ui_date + display_ui_time + display_ui_AMPM)
         w.display_row = str(display_ui_row)
@@ -233,15 +257,49 @@ class Worker1(QObject):
     gui_display = pyqtSignal()
     def __init__(self):
         super().__init__()
+        self.list_check = []
     def main_thread(self):
         print("Process 1 lan") 
         #Full data in debug txt file
-        serial_number = run_algorithm.relation_csv_to_list()
-        
-        index_duplicate,w.len_duplicate = run_algorithm.find_duplicates(serial_number)
-        data = pd.read_csv(csv_direct)
-        print("Len duplicate: ",w.len_duplicate)
+        serial_number,colum0,colum1,colum2,colum4,colum6 = run_algorithm.relation_csv_to_list() #LIST TOTAL
+        #06/09/2023
+        if int(w.page1.spinBox.text()) <= len(serial_number):
+            final_end = int(w.page1.spinBox.text())
+        else:
+            final_end = len(serial_number)
+        for i in range(1,final_end):  #LIST CHECK
+            self.list_check.append(serial_number[-i])
+        #print(self.list_check)
+        # if len(serial_number) < int(w.page1.spinBox.text()):
+        #     print("Chua du data,cu tiep tuc", len(serial_number))
+        # else:
+        #     print("Qua nhieu data roi, delete di")
 
+        #     delete_half = int(w.page1.spinBox.text())/2
+        #     delete_half = int(delete_half)
+        #     for i in range(0,delete_half):
+        #         del serial_number[i]
+                
+
+        #Write data to csv saving file
+        # with open ('output.csv','w',newline='') as file:
+        #     writer = csv.writer(file)
+        #     writer.writerow(['Date','Time','AMPM','ROWS','COLUMN','Serial'])
+        #     for i in range(len(self.list_check)):
+        #         writer.writerow([colum0[i],colum1[i],colum2[i],colum4[i],colum6[i],self.list_check[i]])
+
+        #Write data to txt saving file
+        
+        file = open(file_txt_name,'w')
+        for i in range(len(self.list_check)):
+            file.write(str(colum0[i]) + ' '+ str(colum1[i]) + ' '+str(colum2[i]) + ' '+'ROWS'+ ' '+str(colum4[i]) + ' '+'COLUMN'+' '+str(colum6[i]) + ' '+str(self.list_check[i]) + '\n')
+        file.close()
+        ##########
+        # index_duplicate,w.len_duplicate = run_algorithm.find_duplicates(serial_number)
+        index_duplicate,w.len_duplicate = run_algorithm.find_duplicates(self.list_check)
+ 
+        print("Len duplicate: ",w.len_duplicate)
+        print("Index duplicate: ",index_duplicate)
         if w.len_duplicate == 0:
             w.close_window.emit()
 
@@ -249,47 +307,38 @@ class Worker1(QObject):
             w.popup_window.emit()
             for w.index_dup in index_duplicate:
                 w.wait_val = 0
-                run_algorithm.display_ui(w.index_dup)
+                run_algorithm.display_ui(w.index_dup,colum0,colum1,colum2,colum4,colum6,self.list_check)
 
                 w.setText_example.emit()
                 w.wait_val = 1
                 while w.wait_val == 1:
                     pass
-
-            #Đợi xác nhận hết rồi Xoa du lieu luôn 1 lần
-            # for delete_index in index_duplicate:
-            #     data = data.drop(labels=[delete_index],axis=0)
-            # data.to_csv(csv_direct,index=False)
-
-            # #Xóa trên txt, hoàn tất process
-            # print("INDEX DUPLICATE: ",index_duplicate)
-
-
-            # a_file = open(txt_direct,"r")
-            # lines = a_file.readlines()
-            # a_file.close()
-            # #delete rows
-            # for i in range(0,len(index_duplicate)):
-            #     del lines[index_duplicate[i]]
-            #     # print("Line thu: ", i)
-            #     # print(lines[index_duplicate[i]])
-            # #write to new file
-            # new_file = open(txt_direct,"w+")
-            # for line in lines:
-            #     new_file.write(line)
-            # new_file.close()
+            print("Xoa file")
+            #delete_lines('output.csv',index_duplicate)
 
             #Open the file in read mode and read all the lines into a list
-            with open(txt_direct,'r') as file:
+            with open(file_txt_name,'r') as file:
                 lines = file.readlines()
             #Use a loop to remove the rows from the list
             for index in sorted(index_duplicate, reverse=True):
                 del lines[index]
             #Open the same file in write mode and write the updated list to the file
-            with open(txt_direct,'w') as file:
+            with open(file_txt_name,'w') as file:
                 file.writelines(lines)
             w.close_all.emit()
-            
+
+def delete_lines(csv_file,indices):
+    temp_file = csv_file + ".temp"
+    with open(csv_file,'r') as file:
+        with open(temp_file,'w',newline='') as temp:
+            reader = csv.reader(file)
+            writer = csv.writer(temp)
+
+            for i,row in enumerate(reader):
+                if i not in indices:
+                    writer.writerow(row)
+    os.replace(temp_file,csv_file)     
+
 def change_number_complete():
     msg = QtWidgets.QMessageBox()
     #icon Critical,Warning,Information,Question
