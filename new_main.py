@@ -174,6 +174,7 @@ class BackEnd(QMainWindow):
         serial4 = data['4'].to_list()
         serial6 = data['6'].to_list()
         # print(serial)
+        # print("Row 1: ",serial1[100],serial[100])
         return serial,serial0,serial1,serial2,serial4,serial6
     
     def seperate_file(self):
@@ -184,7 +185,7 @@ class BackEnd(QMainWindow):
     def delete_seperate_file(self):
         pass
 
-
+    
     def find_duplicates(self,list_serial):
         duplicates = []
         for number in list_serial:
@@ -217,7 +218,7 @@ class BackEnd(QMainWindow):
                     # print("List serial: ",[j])
                     # print("List unique duplicate: ",[i])
                     save_dup['Dup'+str(i)].append(j)
-            max_value.append(max(save_dup['Dup' +str(i)]))
+            max_value.append(min(save_dup['Dup' +str(i)]))
 
         print("MAX VALUE: ",max_value)
 
@@ -226,8 +227,27 @@ class BackEnd(QMainWindow):
 
         return max_value, len(unique_duplicates)
 
+    def find_index_father_file(self,row):
+        with open(txt_direct,'r') as file:
+            lines = file.readlines()
+            try:
+                index = lines.index(row + '\n')
+                print(f"The index of the row '{row}' is: {index}")
+            except ValueError:
+                print(f"The row '{row}' was not found in the file.")
+                index = 0
+        return index
 
-
+    def delete_line(self,file_path,index):
+        with open(file_path,'r') as file:
+            lines = file.readlines()
+        modified_lines = []
+        for line_number, line in enumerate(lines):
+            if line_number != index:
+                modified_lines.append(line)
+        
+        with open(file_path,'w') as file:
+            file.writelines(modified_lines)
 
     def display_ui(self,position_duplicate,colum0,colum1,colum2,colum4,colum6,list_check):
         # self.data = pd.read_csv(csv_direct)
@@ -258,6 +278,12 @@ class Worker1(QObject):
     def __init__(self):
         super().__init__()
         self.list_check = []
+        self.list_check_col0 = []
+        self.list_check_col1 = []
+        self.list_check_col2 = []
+        self.list_check_col4 = []
+        self.list_check_col6 = []
+        self.list_father_check = []
     def main_thread(self):
         print("Process 1 lan") 
         #Full data in debug txt file
@@ -269,6 +295,11 @@ class Worker1(QObject):
             final_end = len(serial_number)
         for i in range(1,final_end):  #LIST CHECK
             self.list_check.append(serial_number[-i])
+            self.list_check_col0.append(colum0[-i])
+            self.list_check_col1.append(colum1[-i])
+            self.list_check_col2.append(colum2[-i])
+            self.list_check_col4.append(colum4[-i])
+            self.list_check_col6.append(colum6[-i])
         #print(self.list_check)
         # if len(serial_number) < int(w.page1.spinBox.text()):
         #     print("Chua du data,cu tiep tuc", len(serial_number))
@@ -292,12 +323,11 @@ class Worker1(QObject):
         
         file = open(file_txt_name,'w')
         for i in range(len(self.list_check)):
-            file.write(str(colum0[i]) + ' '+ str(colum1[i]) + ' '+str(colum2[i]) + ' '+'ROWS'+ ' '+str(colum4[i]) + ' '+'COLUMN'+' '+str(colum6[i]) + ' '+str(self.list_check[i]) + '\n')
+            file.write(str(self.list_check_col0[i]) + ' '+ str(self.list_check_col1[i]) + ' '+str(self.list_check_col2[i]) + ' '+'ROWS'+ ' '+str(self.list_check_col4[i]) + ' '+'COLUMN'+' '+str(self.list_check_col6[i]) + ' '+str(self.list_check[i]) + '\n')
         file.close()
         ##########
         # index_duplicate,w.len_duplicate = run_algorithm.find_duplicates(serial_number)
         index_duplicate,w.len_duplicate = run_algorithm.find_duplicates(self.list_check)
- 
         print("Len duplicate: ",w.len_duplicate)
         print("Index duplicate: ",index_duplicate)
         if w.len_duplicate == 0:
@@ -307,8 +337,12 @@ class Worker1(QObject):
             w.popup_window.emit()
             for w.index_dup in index_duplicate:
                 w.wait_val = 0
-                run_algorithm.display_ui(w.index_dup,colum0,colum1,colum2,colum4,colum6,self.list_check)
-
+                run_algorithm.display_ui(w.index_dup,self.list_check_col0,self.list_check_col1,self.list_check_col2,self.list_check_col4,self.list_check_col6,self.list_check)
+                father_row_to_find = str(self.list_check_col0[w.index_dup]) + ' ' + str(self.list_check_col1[w.index_dup]) + ' ' + str(self.list_check_col2[w.index_dup]) + ' ' + 'ROWS' + ' '+str(self.list_check_col4[w.index_dup]) + ' '+'Column'+' '+str(self.list_check_col6[w.index_dup]) + ' '+str(self.list_check[w.index_dup])
+                print("Father row to find: ",father_row_to_find)
+                total_index = run_algorithm.find_index_father_file(father_row_to_find)
+                self.list_father_check.append(total_index)
+                print("List father file: ",self.list_father_check)
                 w.setText_example.emit()
                 w.wait_val = 1
                 while w.wait_val == 1:
@@ -316,6 +350,7 @@ class Worker1(QObject):
             print("Xoa file")
             #delete_lines('output.csv',index_duplicate)
 
+            #Delete file child
             #Open the file in read mode and read all the lines into a list
             with open(file_txt_name,'r') as file:
                 lines = file.readlines()
@@ -325,19 +360,19 @@ class Worker1(QObject):
             #Open the same file in write mode and write the updated list to the file
             with open(file_txt_name,'w') as file:
                 file.writelines(lines)
+
+            #Find index list file father
+
+            #Delete file father
+            with open(txt_direct,'r') as father_file:
+                father_lines = father_file.readlines()
+            #Use a loop to remove the rows from the list
+            for father_index in sorted(self.list_father_check, reverse=True): ####################################IN CHARGE
+                del father_lines[father_index]
+            with open(txt_direct,'w') as father_file:
+                father_file.writelines(father_lines)
             w.close_all.emit()
-
-def delete_lines(csv_file,indices):
-    temp_file = csv_file + ".temp"
-    with open(csv_file,'r') as file:
-        with open(temp_file,'w',newline='') as temp:
-            reader = csv.reader(file)
-            writer = csv.writer(temp)
-
-            for i,row in enumerate(reader):
-                if i not in indices:
-                    writer.writerow(row)
-    os.replace(temp_file,csv_file)     
+ 
 
 def change_number_complete():
     msg = QtWidgets.QMessageBox()
