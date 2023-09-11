@@ -44,8 +44,8 @@ class Password_page(QMainWindow):
         self.page2.Enter_password.clicked.connect(self.check_password)
 
     def check_password(self):
-        if self.page2.password_blank.text() == "admin":
-            print("pass")
+        if self.page2.password_blank.text() == "8891":
+            print("Log in success")
             #Enable button set dung lượng file
             w.page1.spinBox.setEnabled(True)
             w.page1.Confirm_button.setEnabled(True)
@@ -83,8 +83,14 @@ class Page1(QMainWindow):
         self.len_duplicate = 0 
         read_file = open("number_file.txt","r")
         self.memorydata = int(read_file.read())
+        #Set value number of separate file
         self.page1.spinBox.setValue(self.memorydata)
-        
+        #Set value length of file
+        file = open(txt_direct,'r')
+        lines = file.readlines()
+        file.close()
+        self.page1.length_of_file.setText(str(len(lines)))
+
         self.page1.Confirm_ignore.clicked.connect(self.delete_duplicate)
 
         self.page1.Change_button.clicked.connect(self.change_datafile)
@@ -164,7 +170,7 @@ class BackEnd(QMainWindow):
         # column_names = ["Date","Time","AMPM","ROWS","numROW","COLUMN","numColumn","Serial"]
         # df = pd.read_csv("debug.csv",names=column_names)
         # test = df.coul
-        data = pd.read_csv(csv_direct)
+        data = pd.read_csv(csv_direct,low_memory=False)
         # self.copy_data = data.copy()
         # self.copy_data.to_csv("debug_copy.csv",index=False)
         serial = data['7'].to_list()

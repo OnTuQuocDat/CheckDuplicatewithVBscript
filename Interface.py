@@ -81,6 +81,16 @@ class Ui_MainWindow(object):
         self.Confirm_button.setEnabled(False)
         self.Confirm_button.setGeometry(QtCore.QRect(120, 210, 101, 31))
         self.Confirm_button.setObjectName("Confirm_button")
+        self.length_of_file = QtWidgets.QTextEdit(self.centralwidget)
+        self.length_of_file.setGeometry(QtCore.QRect(570, 190, 101, 31))
+        self.length_of_file.setReadOnly(True)
+        self.length_of_file.setObjectName("length_of_file")
+        self.label_6 = QtWidgets.QLabel(self.centralwidget)
+        self.label_6.setGeometry(QtCore.QRect(460, 190, 121, 31))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.label_6.setFont(font)
+        self.label_6.setObjectName("label_6")
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -100,6 +110,7 @@ class Ui_MainWindow(object):
         self.Confirm_ignore.setText(_translate("MainWindow", "Loại bỏ con hàng trùng"))
         self.Change_button.setText(_translate("MainWindow", "Change number"))
         self.Confirm_button.setText(_translate("MainWindow", "CONFIRM"))
+        self.label_6.setText(_translate("MainWindow", "SL mã laser"))
 
 
 if __name__ == "__main__":
